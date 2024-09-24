@@ -11,7 +11,7 @@ class Vehicle:
 
 
 class FerryDeck:
-    def __init__(self):
+    def __init__(self, loading_proceduce):
         self.length = 32.0
         self.columns = 2
         self.deck = [[], []]
@@ -19,9 +19,72 @@ class FerryDeck:
         self.vehicle_count = 0
         self.vehicle_count_by_type = [0, 0, 0]
         self.last_vehicle_failed_to_load = None
+        self.loading_proceduce = loading_proceduce
 
     def load_vehicle(self, vehicle):
+        if self.loading_proceduce == 1:
+            return self.__load_one_deck_first(vehicle)
+        elif self.loading_proceduce == 2:
+            return self.__load_cars_and_lorries_separately(vehicle)
+        else:
+            return self.__load_randomly(vehicle)
+
+    def __load_one_deck_first(self, vehicle):
         for i in range(self.columns):
+            if self.space_remaining[i] >= vehicle.length:
+                self.deck[i].append(vehicle)
+                self.space_remaining[i] -= vehicle.length
+                self.vehicle_count += 1
+                if vehicle.type == 'Car':
+                    self.vehicle_count_by_type[0] += 1
+                elif vehicle.type == 'Lorry':
+                    self.vehicle_count_by_type[1] += 1
+                else:
+                    self.vehicle_count_by_type[2] += 1
+                return 1
+
+        self.last_vehicle_failed_to_load = vehicle
+        return 0
+
+    def __load_cars_and_lorries_separately(self, vehicle):
+        if vehicle.type == 'Car':
+            if self.space_remaining[0] >= vehicle.length:
+                self.deck[0].append(vehicle)
+                self.space_remaining[0] -= vehicle.length
+                self.vehicle_count += 1
+                self.vehicle_count_by_type[0] += 1
+                return 1
+            elif self.space_remaining[1] >= vehicle.length:
+                self.deck[1].append(vehicle)
+                self.space_remaining[1] -= vehicle.length
+                self.vehicle_count += 1
+                self.vehicle_count_by_type[0] += 1
+                return 1
+            else:
+                return 0
+        elif vehicle.type == 'Lorry':
+            if self.space_remaining[1] >= vehicle.length:
+                self.deck[1].append(vehicle)
+                self.space_remaining[1] -= vehicle.length
+                self.vehicle_count += 1
+                self.vehicle_count_by_type[1] += 1
+                return 1
+            elif self.space_remaining[0] >= vehicle.length:
+                self.deck[0].append(vehicle)
+                self.space_remaining[0] -= vehicle.length
+                self.vehicle_count += 1
+                self.vehicle_count_by_type[1] += 1
+                return 1
+            else:
+                return 0
+        else:
+            return self.__load_randomly(vehicle)
+
+    def __load_randomly(self, vehicle):
+        random_col = list(range(self.columns))
+        random.shuffle(random_col)
+
+        for i in random_col:
             if self.space_remaining[i] >= vehicle.length:
                 self.deck[i].append(vehicle)
                 self.space_remaining[i] -= vehicle.length
@@ -65,12 +128,11 @@ def random_vehicle():
         length = random.uniform(8.0, 10.0)
         return Vehicle('Lorry', length)
     else:
-        length = random.uniform(2.0, 3.0)
+        length = random.uniform(1.8, 2.2)
         return Vehicle('Motorcycle', length)
 
 
-def main():
-    total_sim = 1000
+def simulate(total_sim, algorithm=1):
     total_wasted_space = 0
     total_vehicles_carried = 0
     total_cars_carried = 0
@@ -78,9 +140,9 @@ def main():
     total_motorcycles_carried = 0
 
     for i in range(total_sim):
-        ferry_deck = FerryDeck()
-        for j in range(100):
-            ferry_deck.load_vehicle(random_vehicle())
+        ferry_deck = FerryDeck(algorithm)
+        while ferry_deck.load_vehicle(random_vehicle()):
+            pass
 
         total_wasted_space += sum(ferry_deck.space_remaining)
         total_vehicles_carried += ferry_deck.vehicle_count
@@ -101,6 +163,8 @@ def main():
                 / (total_sim*avg_vehicles_carried), 2)
 
     string = ''
+    string += f'Total simulation: {total_sim}\n'
+    string += f'Algorithm: {algorithm}\n'
     string += f'Average wasted space: {avg_wasted_space}%\n'
     string += f'Average vehicles carried: {avg_vehicles_carried}\n'
     string += f'Average cars carried: {avg_cars_carried}%\n'
@@ -108,6 +172,12 @@ def main():
     string +=\
         f'Average motorcycles carried: {avg_motorcycles_carried}%\n'
     print(string)
+
+
+def main():
+    simulate(10000, 1)
+    simulate(10000, 2)
+    simulate(10000, 3)
 
 
 if __name__ == '__main__':
