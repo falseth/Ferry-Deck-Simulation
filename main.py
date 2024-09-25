@@ -1,3 +1,4 @@
+from enum import Enum
 import random
 
 
@@ -10,8 +11,15 @@ class Vehicle:
         return self.type + ', ' + str(self.length) + 'm'
 
 
+class LoadingProcedure(Enum):
+    ONE_COL_FIRST = 0
+    SEPARATE_LOOSE = 1
+    SEPARATE_STRICT = 2
+    RANDOM = 3
+
+
 class FerryDeck:
-    def __init__(self, loading_proceduce):
+    def __init__(self, loading_proceduce=LoadingProcedure.RANDOM):
         self.length = 32.0
         self.columns = 2
         self.deck = [[], []]
@@ -21,11 +29,11 @@ class FerryDeck:
         self.loading_proceduce = loading_proceduce
 
     def load_vehicle(self, vehicle):
-        if self.loading_proceduce == 1:
+        if self.loading_proceduce == LoadingProcedure.ONE_COL_FIRST:
             return self.__load_one_deck_first(vehicle)
-        elif self.loading_proceduce == 2:
+        elif self.loading_proceduce == LoadingProcedure.SEPARATE_LOOSE:
             return self.__load_separately_loose(vehicle)
-        elif self.loading_proceduce == 3:
+        elif self.loading_proceduce == LoadingProcedure.SEPARATE_STRICT:
             return self.__load_separately_strict(vehicle)
         else:
             return self.__load_randomly(vehicle)
@@ -154,10 +162,10 @@ def simulate(total_sim, algorithm=1):
 
 
 def main():
-    simulate(10000, 1)
-    simulate(10000, 2)
-    simulate(10000, 3)
-    simulate(10000, 4)
+    simulate(100000, LoadingProcedure.ONE_COL_FIRST)
+    simulate(100000, LoadingProcedure.SEPARATE_LOOSE)
+    simulate(100000, LoadingProcedure.SEPARATE_STRICT)
+    simulate(100000, LoadingProcedure.RANDOM)
 
 
 if __name__ == '__main__':
