@@ -18,86 +18,67 @@ class FerryDeck:
         self.space_remaining = [self.length] * self.columns
         self.vehicle_count = 0
         self.vehicle_count_by_type = [0, 0, 0]
-        self.last_vehicle_failed_to_load = None
         self.loading_proceduce = loading_proceduce
 
     def load_vehicle(self, vehicle):
         if self.loading_proceduce == 1:
             return self.__load_one_deck_first(vehicle)
         elif self.loading_proceduce == 2:
-            return self.__load_cars_and_lorries_separately(vehicle)
+            return self.__load_separately_loose(vehicle)
+        elif self.loading_proceduce == 3:
+            return self.__load_separately_strict(vehicle)
         else:
             return self.__load_randomly(vehicle)
 
     def __load_one_deck_first(self, vehicle):
         for i in range(self.columns):
-            if self.space_remaining[i] >= vehicle.length:
-                self.deck[i].append(vehicle)
-                self.space_remaining[i] -= vehicle.length
-                self.vehicle_count += 1
-                if vehicle.type == 'Car':
-                    self.vehicle_count_by_type[0] += 1
-                elif vehicle.type == 'Lorry':
-                    self.vehicle_count_by_type[1] += 1
-                else:
-                    self.vehicle_count_by_type[2] += 1
+            if self.__load_vehicle_in_column(vehicle, i):
                 return 1
-
-        self.last_vehicle_failed_to_load = vehicle
         return 0
 
-    def __load_cars_and_lorries_separately(self, vehicle):
-        if vehicle.type == 'Car':
-            if self.space_remaining[0] >= vehicle.length:
-                self.deck[0].append(vehicle)
-                self.space_remaining[0] -= vehicle.length
-                self.vehicle_count += 1
-                self.vehicle_count_by_type[0] += 1
+    def __load_separately_loose(self, vehicle):
+        if vehicle.type == 'Lorry':
+            if self.__load_vehicle_in_column(vehicle, 1):
                 return 1
-            elif self.space_remaining[1] >= vehicle.length:
-                self.deck[1].append(vehicle)
-                self.space_remaining[1] -= vehicle.length
-                self.vehicle_count += 1
-                self.vehicle_count_by_type[0] += 1
-                return 1
-            else:
-                return 0
-        elif vehicle.type == 'Lorry':
-            if self.space_remaining[1] >= vehicle.length:
-                self.deck[1].append(vehicle)
-                self.space_remaining[1] -= vehicle.length
-                self.vehicle_count += 1
-                self.vehicle_count_by_type[1] += 1
-                return 1
-            elif self.space_remaining[0] >= vehicle.length:
-                self.deck[0].append(vehicle)
-                self.space_remaining[0] -= vehicle.length
-                self.vehicle_count += 1
-                self.vehicle_count_by_type[1] += 1
+            elif self.__load_vehicle_in_column(vehicle, 0):
                 return 1
             else:
                 return 0
         else:
-            return self.__load_randomly(vehicle)
+            if self.__load_vehicle_in_column(vehicle, 0):
+                return 1
+            elif self.__load_vehicle_in_column(vehicle, 1):
+                return 1
+            else:
+                return 0
+
+    def __load_separately_strict(self, vehicle):
+        if vehicle.type == 'Lorry':
+            return self.__load_vehicle_in_column(vehicle, 1)
+        else:
+            return self.__load_vehicle_in_column(vehicle, 0)
 
     def __load_randomly(self, vehicle):
         random_col = list(range(self.columns))
         random.shuffle(random_col)
 
         for i in random_col:
-            if self.space_remaining[i] >= vehicle.length:
-                self.deck[i].append(vehicle)
-                self.space_remaining[i] -= vehicle.length
-                self.vehicle_count += 1
-                if vehicle.type == 'Car':
-                    self.vehicle_count_by_type[0] += 1
-                elif vehicle.type == 'Lorry':
-                    self.vehicle_count_by_type[1] += 1
-                else:
-                    self.vehicle_count_by_type[2] += 1
+            if self.__load_vehicle_in_column(vehicle, i):
                 return 1
-
-        self.last_vehicle_failed_to_load = vehicle
+        return 0
+    
+    def __load_vehicle_in_column(self, vehicle, i):
+        if self.space_remaining[i] >= vehicle.length:
+            self.deck[i].append(vehicle)
+            self.space_remaining[i] -= vehicle.length
+            self.vehicle_count += 1
+            if vehicle.type == 'Car':
+                self.vehicle_count_by_type[0] += 1
+            elif vehicle.type == 'Lorry':
+                self.vehicle_count_by_type[1] += 1
+            else:
+                self.vehicle_count_by_type[2] += 1
+            return 1
         return 0
 
     def __str__(self):
@@ -114,8 +95,6 @@ class FerryDeck:
         string += f'Total lorries carried: {self.vehicle_count_by_type[1]}\n'
         string\
             += f'Total motorcycles carried: {self.vehicle_count_by_type[2]}\n'
-        string += f'Last vehicle that failed to load: \
-            {self.last_vehicle_failed_to_load.__str__()}\n'
         return string
 
 
@@ -178,6 +157,7 @@ def main():
     simulate(10000, 1)
     simulate(10000, 2)
     simulate(10000, 3)
+    simulate(10000, 4)
 
 
 if __name__ == '__main__':
